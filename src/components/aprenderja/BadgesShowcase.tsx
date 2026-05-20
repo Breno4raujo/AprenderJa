@@ -1,12 +1,38 @@
-import { Sun, Moon, Heart, Trophy, Lock } from "lucide-react";
-import type { SoftSkillBadge } from "@/lib/aprenderja/types";
+import {
+  Sun, Moon, Heart, Trophy, Lock,
+  Footprints, Coffee, Compass, Flag, Medal, Rocket, Zap, CalendarCheck,
+  CalendarDays, Target, Sparkles, Shield, Scale, RefreshCw, Flame, Gauge, BookOpen,
+  Star,
+} from "lucide-react";
+import type { BadgeIcon, SoftSkillBadge } from "@/lib/aprenderja/types";
 
-const ICONS = {
+const ICONS: Record<BadgeIcon, React.ComponentType<{ className?: string }>> = {
   weekend: Sun,
   early: Moon,
   comeback: Heart,
   consistency: Trophy,
-} as const;
+  firstStep: Footprints,
+  nightOwl: Moon,
+  lunchBreak: Coffee,
+  explorer: Compass,
+  halfway: Flag,
+  finisher: Medal,
+  marathon: Rocket,
+  quickWin: Zap,
+  weekStreak: CalendarCheck,
+  monthIn: CalendarDays,
+  focus: Target,
+  curiosity: Sparkles,
+  courage: Shield,
+  balance: Scale,
+  rebuild: RefreshCw,
+  spark: Flame,
+  pace: Gauge,
+  deepDive: BookOpen,
+  milestone25: Star,
+  milestone50: Star,
+  milestone75: Star,
+};
 
 interface Props { badges: SoftSkillBadge[] }
 
