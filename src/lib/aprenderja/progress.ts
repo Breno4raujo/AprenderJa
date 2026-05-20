@@ -99,24 +99,74 @@ function buildResumeContext(views: ModuleProgressView[]) {
   };
 }
 
-function buildBadges(progress: UserProgress[]): SoftSkillBadge[] {
-  const hasWeekend = progress.some((p) => {
-    if (!p.lastAccessedAt) return false;
-    const d = p.lastAccessedAt.getDay();
+function buildBadges(progress: UserProgress[], overallPercent = 0, totalLessons = 0, completedLessons = 0): SoftSkillBadge[] {
+  const accessed = progress.filter((p) => p.lastAccessedAt);
+  const completedMods = progress.filter((p) => p.completedAt);
+
+  const hasWeekend = accessed.some((p) => {
+    const d = p.lastAccessedAt!.getDay();
     return d === 0 || d === 6;
   });
-  const hasEarly = progress.some((p) => p.lastAccessedAt && p.lastAccessedAt.getHours() < 8);
+  const hasEarly = accessed.some((p) => p.lastAccessedAt!.getHours() < 8);
+  const hasNight = accessed.some((p) => p.lastAccessedAt!.getHours() >= 22);
+  const hasLunch = accessed.some((p) => {
+    const h = p.lastAccessedAt!.getHours();
+    return h >= 12 && h < 14;
+  });
   const comeback = progress.some((p) => {
     if (!p.lastAccessedAt || !p.completedAt) return false;
-    const gap = daysBetween(p.lastAccessedAt, p.completedAt);
-    return gap >= 5;
+    return daysBetween(p.lastAccessedAt, p.completedAt) >= 5;
   });
-  const consistency = progress.filter((p) => p.completedAt).length >= 2;
+  const firstStep = completedLessons >= 1;
+  const explorer = accessed.length >= 2;
+  const consistency = completedMods.length >= 2;
+  const finisher = completedMods.length >= 3;
+  const marathon = completedMods.length >= 5;
+  const quickWin = completedMods.some((p) => {
+    if (!p.completedAt || !p.lastAccessedAt) return false;
+    return daysBetween(p.completedAt, p.lastAccessedAt) <= 2;
+  });
+  const now = Date.now();
+  const weekStreak = accessed.some((p) => (now - p.lastAccessedAt!.getTime()) / 86400000 <= 7);
+  const monthIn = accessed.some((p) => (now - p.lastAccessedAt!.getTime()) / 86400000 >= 21);
+  const focus = completedLessons >= 10;
+  const curiosity = completedLessons >= 5;
+  const courage = firstStep; // ter começado já é coragem
+  const balance = hasWeekend && accessed.some((p) => {
+    const d = p.lastAccessedAt!.getDay();
+    return d >= 1 && d <= 5;
+  });
+  const rebuild = comeback;
+  const spark = completedLessons >= 3;
+  const pace = completedMods.length >= 1;
+  const deepDive = totalLessons > 0 && completedLessons / totalLessons >= 0.4;
+
   return [
+    { id: "firstStep", icon: "firstStep", label: "Primeiro Passo", description: "Concluiu sua primeira lição.", earned: firstStep },
+    { id: "courage", icon: "courage", label: "Coragem de Recomeçar", description: "Decidiu começar uma nova jornada.", earned: courage },
+    { id: "spark", icon: "spark", label: "Faísca Acesa", description: "Concluiu 3 lições — o ritmo está nascendo.", earned: spark },
+    { id: "curiosity", icon: "curiosity", label: "Curiosidade Ativa", description: "Concluiu 5 lições no seu tempo.", earned: curiosity },
+    { id: "focus", icon: "focus", label: "Foco de Adulto", description: "Concluiu 10 lições — disciplina real.", earned: focus },
+    { id: "explorer", icon: "explorer", label: "Explorador(a)", description: "Visitou mais de um módulo.", earned: explorer },
+    { id: "deepDive", icon: "deepDive", label: "Mergulho Profundo", description: "Passou de 40% do curso.", earned: deepDive },
+    { id: "halfway", icon: "halfway", label: "Travessia da Metade", description: "Atingiu 50% do curso.", earned: overallPercent >= 50 },
+    { id: "milestone25", icon: "milestone25", label: "Primeiro Quarto", description: "Conquistou 25% da jornada.", earned: overallPercent >= 25 },
+    { id: "milestone50", icon: "milestone50", label: "Meio Caminho", description: "Conquistou 50% da jornada.", earned: overallPercent >= 50 },
+    { id: "milestone75", icon: "milestone75", label: "Reta Final à Vista", description: "Conquistou 75% da jornada.", earned: overallPercent >= 75 },
+    { id: "consistency", icon: "consistency", label: "Ritmo Próprio", description: "Concluiu 2 módulos no seu tempo.", earned: consistency },
+    { id: "finisher", icon: "finisher", label: "Acabador(a)", description: "Concluiu 3 módulos.", earned: finisher },
+    { id: "marathon", icon: "marathon", label: "Maratonista da Vida", description: "Concluiu 5 módulos — fôlego raro.", earned: marathon },
+    { id: "quickWin", icon: "quickWin", label: "Vitória Rápida", description: "Fechou um módulo em até 2 dias.", earned: quickWin },
+    { id: "pace", icon: "pace", label: "Ritmo Encontrado", description: "Fechou seu primeiro módulo.", earned: pace },
     { id: "weekend", icon: "weekend", label: "Guerreiro de Fim de Semana", description: "Estudou em um sábado ou domingo.", earned: hasWeekend },
     { id: "early", icon: "early", label: "Madrugador(a)", description: "Estudou antes das 8h da manhã.", earned: hasEarly },
+    { id: "nightOwl", icon: "nightOwl", label: "Coruja Noturna", description: "Estudou depois das 22h.", earned: hasNight },
+    { id: "lunchBreak", icon: "lunchBreak", label: "Hora do Almoço", description: "Estudou entre 12h e 14h.", earned: hasLunch },
+    { id: "balance", icon: "balance", label: "Equilíbrio", description: "Estudou tanto na semana quanto no fim de semana.", earned: balance },
+    { id: "weekStreak", icon: "weekStreak", label: "Semana Viva", description: "Estudou nos últimos 7 dias.", earned: weekStreak },
+    { id: "monthIn", icon: "monthIn", label: "Mês de Jornada", description: "Está nessa caminhada há 3+ semanas.", earned: monthIn },
     { id: "comeback", icon: "comeback", label: "Persistência", description: "Voltou a estudar após uma pausa de 5+ dias.", earned: comeback },
-    { id: "consistency", icon: "consistency", label: "Ritmo Próprio", description: "Concluiu 2 módulos no seu tempo.", earned: consistency },
+    { id: "rebuild", icon: "rebuild", label: "Recomeço Bonito", description: "Retomou os estudos depois de uma pausa.", earned: rebuild },
   ];
 }
 
@@ -153,6 +203,6 @@ export function computeProgressSummary(
     encouragement,
     resumeContext: buildResumeContext(views),
     weeklyEnergy: { current: weeklyCurrentMinutes, goal: weeklyGoalMinutes },
-    badges: buildBadges(progress),
+    badges: buildBadges(progress, overallPercent, totalLessons, completedLessons),
   };
 }
