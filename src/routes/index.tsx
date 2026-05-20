@@ -12,12 +12,14 @@ import { MicroHabitCard } from "@/components/aprenderja/MicroHabitCard";
 import { VictoriesWall } from "@/components/aprenderja/VictoriesWall";
 import { ImpactCalculator } from "@/components/aprenderja/ImpactCalculator";
 import { PauseWeek } from "@/components/aprenderja/PauseWeek";
+import { CoursesManager } from "@/components/aprenderja/CoursesManager";
 import { mockCourse, mockModules, mockUser, initialProgress } from "@/lib/aprenderja/mockData";
 import { computeProgressSummary } from "@/lib/aprenderja/progress";
-import type { PaceMode, UserProgress, Victory } from "@/lib/aprenderja/types";
+import type { Course, Module, PaceMode, UserProgress, Victory } from "@/lib/aprenderja/types";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
+  ssr: false,
   head: () => ({
     meta: [
       { title: "AprenderJá — Sua nova carreira, no seu ritmo" },
@@ -31,15 +33,26 @@ export const Route = createFileRoute("/")({
 });
 
 function Dashboard() {
-  const [progress, setProgress] = useState<UserProgress[]>(initialProgress);
+  const [courses, setCourses] = useState<Course[]>([mockCourse]);
+  const [modulesByCourse, setModulesByCourse] = useState<Record<string, Module[]>>({
+    [mockCourse.id]: mockModules,
+  });
+  const [progressByCourse, setProgressByCourse] = useState<Record<string, UserProgress[]>>({
+    [mockCourse.id]: initialProgress,
+  });
+  const [activeCourseId, setActiveCourseId] = useState<string>(mockCourse.id);
   const [pace, setPace] = useState<PaceMode>("focado");
   const [celebrating, setCelebrating] = useState<string | null>(null);
   const [paused, setPaused] = useState(false);
   const [victories, setVictories] = useState<Victory[]>([]);
 
+  const activeCourse = courses.find((c) => c.id === activeCourseId) ?? courses[0];
+  const activeModules = modulesByCourse[activeCourse.id] ?? [];
+  const progress = progressByCourse[activeCourse.id] ?? [];
+
   const summary = useMemo(
-    () => computeProgressSummary(mockCourse, mockModules, progress, pace),
-    [progress, pace],
+    () => computeProgressSummary(activeCourse, activeModules, progress, pace),
+    [activeCourse, activeModules, progress, pace],
   );
 
   // Seed victories from already-completed modules + current milestone on mount.
@@ -64,7 +77,7 @@ function Dashboard() {
     }
     setVictories(seeded);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeCourseId]);
 
   const resumeOn = useMemo(() => {
     if (!paused) return null;
@@ -80,12 +93,13 @@ function Dashboard() {
 
   const handleAdvance = (moduleId: string) => {
     const prevPercent = summary.overallPercent;
-    setProgress((prev) => {
+    setProgressByCourse((all) => {
+      const prev = all[activeCourse.id] ?? [];
       const next = prev.map((p) => ({ ...p }));
-      const mod = mockModules.find((m) => m.id === moduleId);
+      const mod = activeModules.find((m) => m.id === moduleId);
       const entry = next.find((p) => p.moduleId === moduleId);
-      if (!mod || !entry) return prev;
-      if (entry.completedLessons >= mod.totalLessons) return prev;
+      if (!mod || !entry) return all;
+      if (entry.completedLessons >= mod.totalLessons) return all;
       entry.completedLessons += 1;
       entry.lastAccessedAt = new Date();
       if (entry.completedLessons >= mod.totalLessons) {
@@ -103,11 +117,22 @@ function Dashboard() {
           },
         ]);
       }
-      return next;
+      return { ...all, [activeCourse.id]: next };
     });
     // Milestone victory check (25/50/75/100)
     setTimeout(() => {
-      const newSummary = computeProgressSummary(mockCourse, mockModules, progress.map((p) => p.moduleId === moduleId ? { ...p, completedLessons: Math.min((p.completedLessons || 0) + 1, mockModules.find((m) => m.id === moduleId)?.totalLessons ?? 0) } : p), pace);
+      const newProgress = progress.map((p) =>
+        p.moduleId === moduleId
+          ? {
+              ...p,
+              completedLessons: Math.min(
+                (p.completedLessons || 0) + 1,
+                activeModules.find((m) => m.id === moduleId)?.totalLessons ?? 0,
+              ),
+            }
+          : p,
+      );
+      const newSummary = computeProgressSummary(activeCourse, activeModules, newProgress, pace);
       const newPercent = newSummary.overallPercent;
       const crossed = [25, 50, 75, 100].find((m) => prevPercent < m && newPercent >= m);
       if (crossed) {
@@ -130,11 +155,48 @@ function Dashboard() {
     if (inProgress) handleAdvance(inProgress.module.id);
   };
 
+  const handleAddCourse = (course: Course, mods: Module[]) => {
+    setCourses((cs) => [...cs, course]);
+    setModulesByCourse((m) => ({ ...m, [course.id]: mods }));
+    setProgressByCourse((p) => ({
+      ...p,
+      [course.id]: mods.map((mod) => ({
+        id: `p-${mod.id}`,
+        userId: mockUser.id,
+        moduleId: mod.id,
+        completedLessons: 0,
+        lastAccessedAt: null,
+        completedAt: null,
+      })),
+    }));
+    setActiveCourseId(course.id);
+  };
+
+  const handleRemoveCourse = (courseId: string) => {
+    if (courses.length <= 1) return;
+    setCourses((cs) => cs.filter((c) => c.id !== courseId));
+    setModulesByCourse(({ [courseId]: _m, ...rest }) => rest);
+    setProgressByCourse(({ [courseId]: _p, ...rest }) => rest);
+    if (activeCourseId === courseId) {
+      const next = courses.find((c) => c.id !== courseId);
+      if (next) setActiveCourseId(next.id);
+    }
+  };
+
   const currentInProgress = summary.modules.find((m) => !m.isCompleted && m.completedLessons > 0)
     ?? summary.modules.find((m) => !m.isCompleted);
 
   return (
     <DashboardLayout userName={mockUser.name}>
+      <CoursesManager
+        courses={courses}
+        modulesByCourse={modulesByCourse}
+        activeCourseId={activeCourse.id}
+        onSelect={setActiveCourseId}
+        onAdd={handleAddCourse}
+        onRemove={handleRemoveCourse}
+      />
+
       <OverallProgressCard summary={summary} />
 
       <PauseWeek paused={paused} resumeOn={resumeOn} onToggle={() => setPaused((p) => !p)} />
