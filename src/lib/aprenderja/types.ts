@@ -39,12 +39,39 @@ export interface ModuleProgressView {
   lastAccessedAt: Date | null;
 }
 
+export type BadgeIcon =
+  | "weekend"
+  | "early"
+  | "comeback"
+  | "consistency"
+  | "firstStep"
+  | "nightOwl"
+  | "lunchBreak"
+  | "explorer"
+  | "halfway"
+  | "finisher"
+  | "marathon"
+  | "quickWin"
+  | "weekStreak"
+  | "monthIn"
+  | "focus"
+  | "curiosity"
+  | "courage"
+  | "balance"
+  | "rebuild"
+  | "spark"
+  | "pace"
+  | "deepDive"
+  | "milestone25"
+  | "milestone50"
+  | "milestone75";
+
 export interface SoftSkillBadge {
   id: string;
   label: string;
   description: string;
   earned: boolean;
-  icon: "weekend" | "early" | "comeback" | "consistency";
+  icon: BadgeIcon;
 }
 
 export interface ProgressSummary {
