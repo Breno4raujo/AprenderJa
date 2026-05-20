@@ -203,6 +203,6 @@ export function computeProgressSummary(
     encouragement,
     resumeContext: buildResumeContext(views),
     weeklyEnergy: { current: weeklyCurrentMinutes, goal: weeklyGoalMinutes },
-    badges: buildBadges(progress),
+    badges: buildBadges(progress, overallPercent, totalLessons, completedLessons),
   };
 }
