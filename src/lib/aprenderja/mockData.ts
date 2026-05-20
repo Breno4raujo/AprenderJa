@@ -2,8 +2,8 @@ import type { Course, Module, User, UserProgress } from "./types";
 
 export const mockUser: User = {
   id: "u1",
-  name: "Marina",
-  email: "marina@example.com",
+  name: "Breno",
+  email: "breno@example.com",
   createdAt: new Date("2025-03-01"),
 };
 

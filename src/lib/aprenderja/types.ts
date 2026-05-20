@@ -65,3 +65,11 @@ export interface ProgressSummary {
   weeklyEnergy: { current: number; goal: number };
   badges: SoftSkillBadge[];
 }
+
+export interface Victory {
+  id: string;
+  kind: "module" | "milestone" | "badge";
+  title: string;
+  message: string;
+  earnedAt: Date;
+}
