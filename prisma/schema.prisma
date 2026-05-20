@@ -1,0 +1,54 @@
+// AprenderJá — Schema Prisma de referência
+// Use este schema ao migrar a lógica de `src/lib/aprenderja/progress.ts`
+// para endpoints reais (ex.: Next.js API Routes ou Express).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String         @id @default(cuid())
+  name      String
+  email     String         @unique
+  createdAt DateTime       @default(now())
+  progress  UserProgress[]
+}
+
+model Course {
+  id            String   @id @default(cuid())
+  title         String
+  description   String
+  totalModules  Int
+  modules       Module[]
+}
+
+model Module {
+  id           String         @id @default(cuid())
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId     String
+  title        String
+  order        Int
+  totalLessons Int
+  progress     UserProgress[]
+
+  @@index([courseId, order])
+}
+
+model UserProgress {
+  id               String    @id @default(cuid())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId           String
+  module           Module    @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  moduleId         String
+  completedLessons Int       @default(0)
+  lastAccessedAt   DateTime?
+  completedAt      DateTime?
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+}
