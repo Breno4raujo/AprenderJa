@@ -72,14 +72,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
+      { title: "AprenderJa" },
+      { name: "description", content: "AprenderJá é uma plataforma de requalificação profissional para adultos que rastreia o progresso e oferece encorajamento." },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { property: "og:title", content: "AprenderJa" },
+      { property: "og:description", content: "AprenderJá é uma plataforma de requalificação profissional para adultos que rastreia o progresso e oferece encorajamento." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "AprenderJa" },
+      { name: "twitter:description", content: "AprenderJá é uma plataforma de requalificação profissional para adultos que rastreia o progresso e oferece encorajamento." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d8ff6958-1e42-459c-8621-80c0b4a1db01/id-preview-15e9a0f6--1c7dc2bb-e6ad-4325-aa96-a91a7b8b0063.lovable.app-1779570890420.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/d8ff6958-1e42-459c-8621-80c0b4a1db01/id-preview-15e9a0f6--1c7dc2bb-e6ad-4325-aa96-a91a7b8b0063.lovable.app-1779570890420.png" },
     ],
     links: [
       {
