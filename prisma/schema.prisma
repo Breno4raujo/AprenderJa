@@ -1,7 +1,3 @@
-// AprenderJá — Schema Prisma de referência
-// Use este schema ao migrar a lógica de `src/lib/aprenderja/progress.ts`
-// para endpoints reais (ex.: Next.js API Routes ou Express).
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,19 +8,20 @@ datasource db {
 }
 
 model User {
-  id        String         @id @default(cuid())
-  name      String
-  email     String         @unique
-  createdAt DateTime       @default(now())
-  progress  UserProgress[]
+  id           String         @id @default(cuid())
+  name         String
+  email        String         @unique
+  passwordHash String
+  createdAt    DateTime       @default(now())
+  progress     UserProgress[]
 }
 
 model Course {
-  id            String   @id @default(cuid())
-  title         String
-  description   String
-  totalModules  Int
-  modules       Module[]
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  totalModules Int
+  modules      Module[]
 }
 
 model Module {
